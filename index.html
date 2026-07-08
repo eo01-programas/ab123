@@ -58,6 +58,16 @@
 
             <div class="form-grid">
                 <label class="field-group">
+                    <span class="field-label">Proceso</span>
+                    <select id="abridora-mobile-proceso" class="mobile-select">
+                        <option value="">Seleccionar...</option>
+                        <option value="DOBLADO+COSIDO">DOBLADO+COSIDO</option>
+                        <option value="ABIERTO">ABIERTO</option>
+                        <option value="DOB+COS-REPROCESO" style="color:#b91c1c;font-weight:700;">DOB+COS-REPROCESO</option>
+                        <option value="ABIERTO-REPROCESO" style="color:#b91c1c;font-weight:700;">ABIERTO-REPROCESO</option>
+                    </select>
+                </label>
+                <label class="field-group">
                     <span class="field-label">Operario</span>
                     <input
                         id="abridora-mobile-operario"
@@ -81,13 +91,13 @@
     <div id="abridora-fin-modal" class="fin-modal-overlay hidden" role="dialog" aria-modal="true" aria-label="Siguiente paso">
         <div class="fin-modal-card">
             <p class="fin-modal-eyebrow">Al terminar en Abridora</p>
-            <h3 class="fin-modal-title">¿Cuál es el siguiente paso?</h3>
+            <h3 class="fin-modal-title">¿Cuál es el siguiente proceso?</h3>
             <div class="fin-modal-options">
-                <button type="button" class="fin-modal-btn fin-modal-btn-secado" id="abridora-fin-opt-secado">
-                    Pasa a Secado
-                </button>
                 <button type="button" class="fin-modal-btn fin-modal-btn-rama" id="abridora-fin-opt-rama">
-                    Pasa a Rama Acabado
+                    RAMA ACABADO
+                </button>
+                <button type="button" class="fin-modal-btn fin-modal-btn-secado" id="abridora-fin-opt-secado">
+                    SECADO
                 </button>
             </div>
             <button type="button" class="fin-modal-cancel" id="abridora-fin-modal-cancel">Cancelar</button>
