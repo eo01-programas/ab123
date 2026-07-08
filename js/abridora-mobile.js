@@ -39,8 +39,26 @@
 
     // --- Estado del pase ---
 
+    const REPROCESO_VALUES = ['DOB+COS-REPROCESO', 'ABIERTO-REPROCESO'];
+
+    function isReprocesoValue(value) {
+        return REPROCESO_VALUES.includes(String(value || '').trim().toUpperCase());
+    }
+
     function hasOpenPass(record) {
         return Boolean(record.abridora_inicio) && !record.abridora_fin;
+    }
+
+    function isTerminado(record) {
+        return Boolean(record.abridora_inicio) && Boolean(record.abridora_fin);
+    }
+
+    // Un registro terminado solo puede recibir un segundo pase si el proceso
+    // elegido es un REPROCESO; los pendientes siempre pueden iniciarse.
+    function isEligibleForInicio(record, procesoValue) {
+        if (hasOpenPass(record)) return false;
+        if (isTerminado(record)) return isReprocesoValue(procesoValue);
+        return true;
     }
 
     // --- Estado visual de la tarjeta ---
@@ -251,11 +269,15 @@
             .map((id) => findRecordById(id))
             .filter(Boolean);
         const anyOpen = selectedRecords.some((r) => hasOpenPass(r));
-        const anyNotOpen = selectedRecords.some((r) => !hasOpenPass(r));
+        const procesoValue = els.procesoSelect ? els.procesoSelect.value : '';
+        const anyEligible = selectedRecords.some((r) => isEligibleForInicio(r, procesoValue));
 
         if (els.inicioBtn) {
-            const blockInicio = selectedRecords.length > 0 && !anyNotOpen;
-            els.inicioBtn.textContent = blockInicio ? '✓ En proceso' : 'INICIO';
+            const blockInicio = selectedRecords.length > 0 && !anyEligible;
+            const allTerminadoBlocked = blockInicio && !anyOpen;
+            els.inicioBtn.textContent = blockInicio
+                ? (allTerminadoBlocked ? '✓ Finalizado' : '✓ En proceso')
+                : 'INICIO';
             els.inicioBtn.disabled = blockInicio;
             els.inicioBtn.classList.toggle('button-done', blockInicio);
         }
@@ -353,25 +375,28 @@
             return;
         }
 
-        const updates = Array.from(state.selectedIds)
-            .map((recordId) => {
-                const record = findRecordById(recordId);
-                if (!record || hasOpenPass(record)) return null;
-                return {
-                    id_registro: recordId,
-                    changes: {
-                        abridora_turno: turno,
-                        abridora_operario: operario,
-                        abridora_proceso: proceso,
-                        abridora_inicio: ahora,
-                        abridora_estado: 'PROG'
-                    }
-                };
-            })
+        const selectedRecords = Array.from(state.selectedIds)
+            .map((recordId) => findRecordById(recordId))
             .filter(Boolean);
+        const anyOpen = selectedRecords.some((r) => hasOpenPass(r));
+
+        const updates = selectedRecords
+            .filter((record) => isEligibleForInicio(record, proceso))
+            .map((record) => ({
+                id_registro: String(record.id_registro || ''),
+                changes: {
+                    abridora_turno: turno,
+                    abridora_operario: operario,
+                    abridora_proceso: proceso,
+                    abridora_inicio: ahora,
+                    abridora_estado: 'PROG'
+                }
+            }));
 
         if (!updates.length) {
-            showToast('Las filas seleccionadas ya tienen un proceso abierto. Registra el FIN primero.');
+            showToast(anyOpen
+                ? 'Las filas seleccionadas ya tienen un proceso abierto. Registra el FIN primero.'
+                : 'Las filas seleccionadas ya fueron finalizadas. Selecciona un proceso de REPROCESO para registrar un segundo pase.');
             return;
         }
 
@@ -513,6 +538,7 @@
         els.selectAllBtn.addEventListener('click', toggleSelectAll);
         els.inicioBtn.addEventListener('click', handleInicio);
         els.finBtn.addEventListener('click', handleFinBtnClick);
+        if (els.procesoSelect) els.procesoSelect.addEventListener('change', updateActionButtons);
         if (els.scanButton) els.scanButton.addEventListener('click', handleScan);
 
         // Modal eventos
