@@ -39,7 +39,7 @@
 
     // --- Estado del pase ---
 
-    const REPROCESO_VALUES = ['DOB+COS-REPROCESO', 'ABIERTO-REPROCESO'];
+    const REPROCESO_VALUES = ['COSIDO-REPROCESO', 'ABIERTO-REPROCESO'];
 
     function isReprocesoValue(value) {
         return REPROCESO_VALUES.includes(String(value || '').trim().toUpperCase());
