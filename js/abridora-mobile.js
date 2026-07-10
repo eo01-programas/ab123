@@ -49,6 +49,21 @@
         return Boolean(record.abridora_inicio) && !record.abridora_fin;
     }
 
+    // Si el registro ya está pasando por abridora (inicio o fin), plegado,
+    // rama_crudo, preparado y tenido ya ocurrieron necesariamente antes. Si su
+    // estado sigue en "X PROG" (pendiente), se sobreescribe a "OK".
+    const UPSTREAM_STAGE_ESTADO_FIELDS = ['plegado_estado', 'rama_crudo_estado', 'preparado_estado', 'tenido_estado'];
+
+    function buildUpstreamStageCompletionChanges(record) {
+        const changes = {};
+        UPSTREAM_STAGE_ESTADO_FIELDS.forEach((field) => {
+            if (String(record[field] || '').trim().toUpperCase() === 'X PROG') {
+                changes[field] = 'OK';
+            }
+        });
+        return changes;
+    }
+
     function isTerminado(record) {
         return Boolean(record.abridora_inicio) && Boolean(record.abridora_fin);
     }
@@ -389,7 +404,8 @@
                     abridora_operario: operario,
                     abridora_proceso: proceso,
                     abridora_inicio: ahora,
-                    abridora_estado: 'PROG'
+                    abridora_estado: 'PROG',
+                    ...buildUpstreamStageCompletionChanges(record)
                 }
             }));
 
@@ -441,6 +457,7 @@
                         abridora_fin: ahora,
                         abridora_estado: 'OK',
                         abridora_siguiente_proceso: siguienteProceso,
+                        ...buildUpstreamStageCompletionChanges(record),
                         ...routingChanges
                     }
                 };
